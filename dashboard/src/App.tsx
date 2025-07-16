@@ -1,4 +1,4 @@
-import { Admin, Resource, ListGuesser, ShowGuesser } from "react-admin";
+import { Admin, Resource, ListGuesser, ShowGuesser, EditGuesser } from "react-admin";
 
 import PersonIcon from "@mui/icons-material/Person";
 import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
@@ -37,6 +37,7 @@ export const App = () => (
       name="drivers"
       list={DriverList}
       show={DriverShow}
+      edit={EditGuesser}
     />
     <Resource
       icon={Filter1Icon}

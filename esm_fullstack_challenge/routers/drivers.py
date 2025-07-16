@@ -1,7 +1,7 @@
 from typing import List
-
+import aiosqlite
 from fastapi import APIRouter
-
+from esm_fullstack_challenge.config import DB_FILE
 from esm_fullstack_challenge.models import AutoGenModels
 from esm_fullstack_challenge.routers.utils import \
     get_route_list_function, get_route_id_function
@@ -48,24 +48,16 @@ def create_driver():
 
 
 # Add route to update driver
-@drivers_router.put('/{id}', response_model=table_model)
-def update_driver(id: int):
-    """
-    Update driver.
-    """
-    updated_driver = {
-        'id': f'{id}',
-        'driver_ref': 'Doe',
-        'number': '12345',
-        'code': 'DOE',
-        'forename': 'John',
-        'surname': 'Doe',
-        'dob': '1990-01-01',
-        'nationality': 'American',
-        'url': 'http://example.com/driver/12345',
-    }
-
-    return table_model(**updated_driver)
+@drivers_router.put("/{driver_id}", response_model=table_model)
+async def update_driver(driver_id: int, driver: table_model):
+    async with aiosqlite.connect(DB_FILE) as db:
+        fields = [f"{key}=?" for key in driver.dict().keys() if key != "id"]
+        values = [value for key, value in driver.dict().items() if key != "id"]
+        values.append(driver_id)
+        query = f"UPDATE drivers SET {', '.join(fields)} WHERE id=?"
+        await db.execute(query, values)
+        await db.commit()
+    return driver
 
 
 # Add route to delete driver
