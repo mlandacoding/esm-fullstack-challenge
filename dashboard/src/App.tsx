@@ -18,7 +18,9 @@ import { dataProvider } from "./dataProvider";
 
 import { RaceList, RaceShow } from "./pages/races";
 import { DriverList, DriverShow } from "./pages/drivers";
+
 import DriverCreate from "./pages/driver-create";
+import ConstructorStandingsList from "./pages/constructors-standings-list";
 
 
 export const App = () => (
@@ -74,8 +76,9 @@ export const App = () => (
     />
     <Resource
       icon={FormatListNumberedIcon}
-      name="constructor_standings"
-      list={ListGuesser}
+      name="my/my_constructor_standings"
+      options={{ label: "Constructor Standings" }}
+      list={ConstructorStandingsList}
       show={ShowGuesser}
     />
     <Resource
