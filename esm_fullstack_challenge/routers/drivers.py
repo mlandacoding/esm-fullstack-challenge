@@ -59,27 +59,6 @@ async def create_driver(driver: DriverCreateModel):
         return table_model(**dict(row))
 
 
-# Add route to create a new driver
-# @drivers_router.post('', response_model=table_model)
-# def create_driver():
-#     """
-#     Create a new driver.
-#     """
-#     new_driver = {
-#         'id': 12345,
-#         'driver_ref': 'Doe',
-#         'number': '12345',
-#         'code': 'DOE',
-#         'forename': 'John',
-#         'surname': 'Doe',
-#         'dob': '1990-01-01',
-#         'nationality': 'American',
-#         'url': 'http://example.com/driver/12345',
-#     }
-
-#     return table_model(**new_driver)
-
-
 # Add route to update driver
 @drivers_router.put("/{driver_id}", response_model=table_model)
 async def update_driver(driver_id: int, driver: table_model):
