@@ -18,6 +18,8 @@ import { dataProvider } from "./dataProvider";
 
 import { RaceList, RaceShow } from "./pages/races";
 import { DriverList, DriverShow } from "./pages/drivers";
+import DriverCreate from "./pages/driver-create";
+
 
 export const App = () => (
   <Admin
@@ -38,6 +40,7 @@ export const App = () => (
       list={DriverList}
       show={DriverShow}
       edit={EditGuesser}
+      create={DriverCreate}
     />
     <Resource
       icon={Filter1Icon}

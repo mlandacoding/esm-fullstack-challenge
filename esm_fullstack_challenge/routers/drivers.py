@@ -1,11 +1,11 @@
-from typing import List
+from typing import List, Optional
 import aiosqlite
 from fastapi import APIRouter
 from esm_fullstack_challenge.config import DB_FILE
 from esm_fullstack_challenge.models import AutoGenModels
 from esm_fullstack_challenge.routers.utils import \
     get_route_list_function, get_route_id_function
-
+from pydantic import BaseModel
 
 drivers_router = APIRouter()
 
@@ -25,26 +25,59 @@ drivers_router.add_api_route(
     methods=["GET"], response_model=List[table_model],
 )
 
+class DriverCreateModel(BaseModel):
+    driver_ref: str
+    number: str
+    code: str
+    forename: str
+    surname: str
+    dob: str
+    nationality: str
+    url: str
+    id: Optional[int] = None
+
+
+@drivers_router.post("", response_model=table_model)
+async def create_driver(driver: DriverCreateModel):
+    driver_data = driver.dict(exclude_unset=True)
+    async with aiosqlite.connect(DB_FILE) as db:
+        db.row_factory = aiosqlite.Row
+        cursor = await db.execute("SELECT MAX(id) as max_id FROM drivers")
+        row = await cursor.fetchone()
+        next_id = (row["max_id"] or 0) + 1
+    driver_data["id"] = next_id
+    columns = ', '.join(driver_data.keys())
+    placeholders = ', '.join(['?' for _ in driver_data])
+    values = list(driver_data.values())
+    query = f"INSERT INTO drivers ({columns}) VALUES ({placeholders})"
+    async with aiosqlite.connect(DB_FILE) as db:
+        await db.execute(query, values)
+        await db.commit()
+        db.row_factory = aiosqlite.Row
+        cursor = await db.execute("SELECT * FROM drivers WHERE id = ?", (next_id,))
+        row = await cursor.fetchone()
+        return table_model(**dict(row))
+
 
 # Add route to create a new driver
-@drivers_router.post('', response_model=table_model)
-def create_driver():
-    """
-    Create a new driver.
-    """
-    new_driver = {
-        'id': 12345,
-        'driver_ref': 'Doe',
-        'number': '12345',
-        'code': 'DOE',
-        'forename': 'John',
-        'surname': 'Doe',
-        'dob': '1990-01-01',
-        'nationality': 'American',
-        'url': 'http://example.com/driver/12345',
-    }
+# @drivers_router.post('', response_model=table_model)
+# def create_driver():
+#     """
+#     Create a new driver.
+#     """
+#     new_driver = {
+#         'id': 12345,
+#         'driver_ref': 'Doe',
+#         'number': '12345',
+#         'code': 'DOE',
+#         'forename': 'John',
+#         'surname': 'Doe',
+#         'dob': '1990-01-01',
+#         'nationality': 'American',
+#         'url': 'http://example.com/driver/12345',
+#     }
 
-    return table_model(**new_driver)
+#     return table_model(**new_driver)
 
 
 # Add route to update driver
@@ -61,21 +94,12 @@ async def update_driver(driver_id: int, driver: table_model):
 
 
 # Add route to delete driver
-@drivers_router.delete('/{id}', response_model=table_model)
-def delete_driver(id: int):
-    """
-    Delete driver.
-    """
-    updated_driver = {
-        'id': f'{id}',
-        'driver_ref': 'Doe',
-        'number': '12345',
-        'code': 'DOE',
-        'forename': 'John',
-        'surname': 'Doe',
-        'dob': '1990-01-01',
-        'nationality': 'American',
-        'url': 'http://example.com/driver/12345',
-    }
+@drivers_router.delete("/{driver_id}")
+async def delete_driver(driver_id: int):
+    async with aiosqlite.connect(DB_FILE) as db:
+        await db.execute("DELETE FROM drivers WHERE id = ?", (driver_id,))
+        await db.commit()
+    return {"status": "deleted"}
 
-    return table_model(**updated_driver)
+
+
