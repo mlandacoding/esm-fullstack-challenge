@@ -20,6 +20,7 @@ import { RaceList, RaceShow } from "./pages/races";
 import { DriverList, DriverShow } from "./pages/drivers";
 
 import DriverCreate from "./pages/driver-create";
+
 import ConstructorStandingsList from "./pages/constructors-standings-list";
 
 
@@ -46,7 +47,8 @@ export const App = () => (
     />
     <Resource
       icon={Filter1Icon}
-      name="driver_standings"
+      name="drivers/my_driver_standings"
+      options={{ label: "Driver Standings" }}
       list={ListGuesser}
       show={ShowGuesser}
     />

@@ -1,6 +1,6 @@
 from typing import List, Optional
 import aiosqlite
-from fastapi import APIRouter
+from fastapi import APIRouter, Response
 from esm_fullstack_challenge.config import DB_FILE
 from esm_fullstack_challenge.models import AutoGenModels
 from esm_fullstack_challenge.routers.utils import \
@@ -10,6 +10,47 @@ from pydantic import BaseModel
 drivers_router = APIRouter()
 
 table_model = AutoGenModels['drivers']
+
+
+
+class DriverStandingsOut(BaseModel):
+    id: int
+    driver_ref: str
+    number: str
+    forename: str
+    surname: str
+    total_points: float
+
+@drivers_router.get("/my_driver_standings", response_model=List[DriverStandingsOut])
+async def get_driver_standings(response: Response):
+    query = '''
+        SELECT
+            d.id as id,
+            d.driver_ref,
+            d.number,
+            d.forename,
+            d.surname,
+            SUM(r.points) as total_points
+        FROM
+            drivers d
+            JOIN results r ON r.driver_id = d.id
+            JOIN races ra ON r.race_id = ra.id
+        WHERE
+            ra.year = 2024
+        GROUP BY
+            d.id, d.driver_ref, d.number, d.forename, d.surname
+        ORDER BY
+            total_points DESC
+        LIMIT 22
+    '''
+    async with aiosqlite.connect(DB_FILE) as db:
+        db.row_factory = aiosqlite.Row
+        cursor = await db.execute(query)
+        rows = await cursor.fetchall()
+        total = len(rows)
+        response.headers["Content-Range"] = f"driver_standings 0-{max(total-1,0)}/{total}"
+        response.headers["Access-Control-Expose-Headers"] = "Content-Range"
+        return [dict(row) for row in rows]
 
 # Route to get driver by id
 get_driver = get_route_id_function('drivers', table_model)
@@ -24,6 +65,7 @@ drivers_router.add_api_route(
     '', get_drivers,
     methods=["GET"], response_model=List[table_model],
 )
+
 
 class DriverCreateModel(BaseModel):
     driver_ref: str
@@ -79,6 +121,9 @@ async def delete_driver(driver_id: int):
         await db.execute("DELETE FROM drivers WHERE id = ?", (driver_id,))
         await db.commit()
     return {"status": "deleted"}
+
+
+
 
 
 
