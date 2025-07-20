@@ -7,6 +7,7 @@ services:
       - PORT=9000
     volumes:
       - ./esm_fullstack_challenge:/python-package/esm_fullstack_challenge
+      - ./dashboard/src:/frontend-src
     command: api
   dashboard:
     build: ./dashboard

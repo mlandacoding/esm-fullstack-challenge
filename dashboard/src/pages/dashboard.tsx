@@ -62,7 +62,7 @@ const TopDriversByWinsBarChart = ({ data }) => {
         },
       ]}
       layout={{
-        title: { text: "Top Drivers by Wins", font: { color: "#fff" } },
+        title: { text: "Top Drivers by Wins (All Time)", font: { color: "#fff" } },
         xaxis: { title: "Number of Wins" , tickfont: { color: "#fff" }},
         yaxis: { title: "Driver", automargin: true, tickfont: { color: "#fff" } },
         margin: { l: 150, r: 30, t: 50, b: 50 },
@@ -75,20 +75,35 @@ const TopDriversByWinsBarChart = ({ data }) => {
   );
 };
 
-const BasicChart = () => {
+const ConstructorStandingsBarChart = ({ data }) => {
+  if (!data) return null;
+
+  const sortedData = [...data].sort((a, b) => a.total_points - b.total_points);
+
+  const y = sortedData.map((item) => item.constructor_name);
+  const x = sortedData.map((item) => item.total_points);
+
   return (
     <Plot
       data={[
         {
-          x: [1, 2, 3],
-          y: [2, 6, 3],
-          type: "scatter",
-          mode: "lines+markers",
-          marker: { color: "red" },
+          x: x,
+          y: y,
+          type: "bar",
+          orientation: "h",
+          marker: { color: "#d32f2f" },
         },
-        { type: "bar", x: [1, 2, 3], y: [2, 5, 3] },
       ]}
-      layout={{ title: { text: "A Fancier Plot test" } }}
+      layout={{
+        title: { text: "Constructor Standings (2024)", font: { color: "#fff" } },
+        xaxis: { title: "Total Points", tickfont: { color: "#fff" } },
+        yaxis: { title: "Constructor", automargin: true, tickfont: { color: "#fff" } },
+        margin: { l: 150, r: 30, t: 50, b: 50 },
+        height: 400,
+        paper_bgcolor: "transparent",
+        plot_bgcolor: "transparent",
+      }}
+      style={{ width: "100%" }}
     />
   );
 };
@@ -96,20 +111,29 @@ const BasicChart = () => {
 
 
 export const Dashboard = () => {
-  const query = {
-    range: "[0, 9]",
-  };
-  const url = `${API_BASE_URL}/dashboard/top_drivers_by_wins?${stringify(query)}`;
-  const options = {
-    method: "GET",
-    headers: new Headers({
-      Accept: "application/json",
-    }),
-  };
+  const driversUrl = `${API_BASE_URL}/dashboard/top_drivers_by_wins?${stringify({ range: "[0,9]" })}`;
+  const constructorsUrl = `${API_BASE_URL}/my/my_constructor_standings`;
+
+  console.log(constructorsUrl);
+
   const [topDriversData, setTopDriversData] = useState(null);
+  const [constructorStandings, setConstructorStandings] = useState(null);
+
   useEffect(() => {
-    httpClient(url, options).then(({ headers, json }) => {
+    httpClient(driversUrl, {
+      method: "GET",
+      headers: new Headers({ Accept: "application/json" }),
+    }).then(({ json }) => {
       setTopDriversData(json);
+    });
+  }, []);
+
+  useEffect(() => {
+    httpClient(constructorsUrl, {
+      method: "GET",
+      headers: new Headers({ Accept: "application/json" }),
+    }).then(({ json }) => {
+      setConstructorStandings(json);
     });
   }, []);
 
@@ -131,6 +155,18 @@ export const Dashboard = () => {
           </Card>
         </Grid>
       </Grid>
+      
+      <Grid container spacing={2} mt={1}>
+      <Grid item xs={12} md={6}>
+        <Card sx={{ p: 2 }}>
+          <Typography variant="h4" gutterBottom sx={{ textAlign: "left" }}>
+            Constructor Standings (2024)
+          </Typography>
+          <ConstructorStandingsBarChart data={constructorStandings} />
+        </Card>
+      </Grid>
+    </Grid>
+
     </Box>
   );
 };
